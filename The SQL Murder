@@ -1,0 +1,94 @@
+# The SQL Murder Mystery
+
+Site: https://mystery.knightlab.com/
+
+## Primerio código:
+
+SELECT * FROM crime_scene_report
+
+
+## Segundo código
+
+SELECT * FROM crime_scene_report
+WHERE type = 'murder'
+AND date = '20180115'
+AND city = 'SQL City'
+
+## Terceiro código:
+
+SELECT * FROM interview
+
+## Quarto código:
+
+SELECT * FROM person
+WHERE address_street_name = 'Northwestern Dr'
+
+## Quinto código:
+
+SELECT *
+FROM person
+WHERE address_street_name = 'Northwestern Dr'
+ORDER BY address_number DESC;
+
+
+
+## Sexto código:
+
+SELECT * FROM interview
+WHERE person_id = '14887'
+
+
+## Sétimo código:
+
+SELECT * FROM drivers_license
+WHERE plate_number like "%H42W%"
+
+
+## Oitavo código:
+
+SELECT * FROM get_fit_now_member
+WHERE id like "48Z%"
+
+
+## Nono código:
+
+SELECT * FROM interview
+WHERE person_id = '67318'
+
+
+## 10:
+
+SELECT * FROM drivers_license
+WHERE hair_color = 'red'
+AND gender = 'female'
+
+## 11:
+
+SELECT * FROM drivers_license
+WHERE hair_color = 'red'
+AND gender = 'female'
+AND car_make = 'Tesla'
+
+## 12:
+
+SELECT * FROM facebook_event_checkin
+
+
+## 13:
+
+SELECT * FROM facebook_event_checkin
+WHERE date LIKE "2017%"
+
+
+#14:
+
+SELECT * FROM facebook_event_checkin
+WHERE date LIKE "2017%"
+AND event_name = 'SQL Symphony Concert'
+
+
+#15:
+
+SELECT * FROM person
+WHERE id = '99716'
+
