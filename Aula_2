@@ -1,0 +1,12 @@
+--Exercício 1
+WITH carro_sinistro as (
+SELECT placa
+FROM sinistro)
+SELECT MAX(placa)
+FROM carro_sinistro
+
+--Exercício 2
+SELECT * FROM cliente
+WHERE nome like '%a%' and nome not like '%a'
+
+--Exercício 3
