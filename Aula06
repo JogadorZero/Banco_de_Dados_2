@@ -1,0 +1,45 @@
+REVISÃO PARA A PRIMEIRA PROVA DE BANCO DE DADOS 2
+
+1.  Otimização SQL
+    Melhorar o desempenho de consultas e economizar recursos de Hardware
+    -  Desnormalize sempre que possível
+    -  Evite múltiplos JOINs
+    -  Crie e use INDICEs
+    -  Escolha o TIPO DE DADO adequado
+    -  DROP INDEX antes de OPERAÇÕES MASSIVAS
+    -  Matenha as suas TRANSAÇÕES PEQUENAS
+    -  NUNCA use SELECT*
+    -  Sempre analise PLANO DE EXECUÇÃO + ESTATISTICAS das consulta (IO e TIME)
+    -  REBUILD de índices e ESTATÍSTICAS de tabelas
+    -  PDCA – Processo de melhoria continua
+
+2.  Junções
+    I-    INNER JOIN
+    II-   LEFT JOIN
+    III-  RIGHT JOIN
+    IV-   FULL JOIN
+    V-    CROSS JOIN
+
+3.  Subconsultas
+    I-   Aninhada        = NOT IN | IN | > | <
+    II-  Correlacionada  = NOT EXIST | EXIST
+
+4.  CTE (Tabela Virtual)
+    WITH CTE AS (
+      col, COUNT(col) AS c
+      FROM TAB
+    ), CTE2 AS (
+    -------------
+
+5.  Funções de Janela
+
+
+6.  Armazenamento de dados
+
+7.  Indexação
+
+8.  Plano de acesso
+
+9.  
+    
+
