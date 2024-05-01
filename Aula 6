@@ -1,0 +1,95 @@
+/* EXEMPLO
+create or alter proc pr_soma (@n1 int, @n2 int, @total int output) as
+begin
+
+	select @total = @n1 + @n2
+
+end
+go
+
+declare @var int
+exec pr_soma 2, 3, @var output
+select @var
+go
+*/
+
+-- ATIVIDADE 1
+CREATE OR ALTER PROC pr_soma (@n1 int, @n2 int) AS
+BEGIN
+
+	DECLARE @total int
+	SELECT @total = @n1 + @n2
+	SELECT @total
+
+END
+GO
+
+EXEC pr_soma 1, 2
+GO
+
+-- ATIVIDADE 2
+CREATE OR ALTER PROC pr_media (@m1 int, @m2 int, @m3 int, @m4 int) AS
+BEGIN
+
+	DECLARE @media numeric (8,2)
+	SELECT @media = (@m1 + @m2 + @m3 + @m4) / 4
+	SELECT @media
+
+END
+GO
+
+EXEC pr_media 6, 9, 7, 6
+GO
+
+
+-- ATIVIDADE 3
+CREATE OR ALTER PROC soma_quatro (@n1 int, @n2 int, @n3 int, @n4 int) AS
+BEGIN
+
+	DECLARE @total int
+	SELECT @total = @n1 + @n2 + @n3 + @n4
+	SELECT @total
+	IF @n1 IS null OR @n2 IS null OR @n3 IS null OR @n4 IS null
+	print 'Foi com Deus'
+
+
+
+END
+GO
+
+EXEC soma_quatro 2, 5, 3, 4
+GO
+
+
+-- ATIVIDADE 4
+CREATE OR ALTER PROC placa_carro (@placa char(10)) AS
+BEGIN
+
+	SELECT @placa
+	IF EXISTS (SELECT 1 FROM sinistro WHERE placa = @placa)
+	PRINT 'Tem ae,  po'
+	ELSE
+	PRINT 'ARROMBADO'
+
+END
+GO
+
+EXEC placa_carro 'Mjnfawenj'
+GO
+
+
+-- ATIVIDADE 5
+CREATE OR ALTER PROC apolice_carro (@apolice int) AS
+BEGIN
+
+	SELECT @apolice
+	IF EXISTS (SELECT 1 FROM apolice WHERE cod_apolice = @apolice)
+	PRINT 'Ativa'
+	ELSE
+	PRINT 'Não tá ativa'
+
+END
+GO
+
+EXEC apolice_carro 202200001
+GO
