@@ -1,0 +1,78 @@
+-- ATIVIDADE 1
+
+CREATE FUNCTION dbo.fn_DiaDaSemana (@data DATE)
+RETURNS VARCHAR(50)
+AS
+BEGIN
+    RETURN (SELECT DATENAME(dw, @data));
+END
+GO
+
+SELECT dbo.fn_DiaDaSemana('2024-05-07') AS DiaDaSemana -- Retorna o dia da semana nessa data
+GO
+
+
+-- ATIVIDADE 2
+
+CREATE FUNCTION dbo.fn_ParOuImpar (@numero INT)
+RETURNS VARCHAR(10)
+AS
+BEGIN
+    DECLARE @resultado VARCHAR(10);
+
+    IF @numero % 2 = 0
+        SET @resultado = 'Par';
+    ELSE
+        SET @resultado = 'Ímpar';
+
+    RETURN @resultado;
+END
+GO
+
+SELECT dbo.fn_ParOuImpar(2) AS Resultado; -- Retorna 'Par'
+SELECT dbo.fn_ParOuImpar(3) AS Resultado; -- Retorna 'Ímpar'
+GO
+
+
+-- ATIVIDADE 3
+
+CREATE FUNCTION dbo.fn_Idade (@dataNascimento DATE)
+RETURNS INT
+AS
+BEGIN
+    RETURN DATEDIFF(YEAR, @dataNascimento, GETDATE());
+END
+GO
+
+SELECT dbo.fn_Idade('2003-04-06') AS Idade; -- Retorna a idade de uma pessoa nascida em 2 de agosto de 2001
+GO
+
+
+-- ATIVIDADE 4
+
+CREATE FUNCTION dbo.String (@escreve VARCHAR(28))
+RETURNS VARCHAR(28)
+AS
+BEGIN
+	DECLARE @ler VARCHAR(28);
+	SET @ler = dbo.String('Qualquer valor');
+	RETURN @escreve;
+END
+GO
+
+SELECT LEN('top') AS STRING
+GO
+
+
+-- ATIVIDADE 5
+
+CREATE FUNCTION DoisDias (@data1 DATE, @data2 DATE)
+RETURNS INT
+AS
+BEGIN
+	RETURN DATEDIFF(DAY, @data1, @data2)
+END
+GO
+
+SELECT dbo.DoisDias('2003-08-02', '2004-08-02') AS DIA
+GO
