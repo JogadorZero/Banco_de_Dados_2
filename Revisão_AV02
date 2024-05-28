@@ -70,3 +70,187 @@ O uso de índices pode melhorar a performance no SQL Server de várias maneiras:
 3. **Menos Bloqueios**: Como os índices permitem acesso mais rápido aos dados, a duração dos locks nas transações pode ser reduzida, diminuindo a chance de bloqueios prolongados que afetam outras transações.
 4. **Isolamento de Transações**: Índices podem ajudar no isolamento de transações ao permitir que leituras ocorram sem interferir em operações de escrita, e vice-versa, dependendo do tipo de lock utilizado.
 5. **Execução de Junções**: Índices podem acelerar a execução de junções entre tabelas, reduzindo a carga de trabalho no banco de dados e melhorando o desempenho geral.
+
+### Questão 5:
+**Enunciado:** Marque VERDADEIRO ou FALSO para as afirmações sobre junções de tabelas.
+
+**Afirmações:**
+
+1. ( ) O INNER JOIN retorna todas as linhas de ambas as tabelas que têm valores correspondentes nas colunas de junção especificadas.
+2. ( ) O LEFT JOIN entre duas tabelas retorna todas as linhas da tabela à esquerda e as linhas correspondentes da tabela à direita. Se não houver correspondência, NULL é retornado para as colunas da tabela à direita.
+3. ( ) O RIGHT JOIN é similar a um LEFT JOIN, mas ele inverte a ordem das tabelas, retornando todas as linhas da tabela à direita e as linhas correspondentes da tabela à esquerda.
+4. ( ) O FULL JOIN entre duas tabelas retorna todas as linhas de ambas as tabelas, incluindo as que não têm correspondência. As colunas da tabela sem correspondência são preenchidas com NULL.
+5. ( ) O CROSS JOIN (também conhecido como produto cartesiano) combina cada linha da primeira tabela com todas as linhas da segunda tabela, criando um conjunto de resultados que contém todas as combinações possíveis entre os registros das duas tabelas, sem levar em consideração qualquer critério de correspondência específico.
+
+**Respostas:**
+
+1. ( V ) O INNER JOIN retorna todas as linhas de ambas as tabelas que têm valores correspondentes nas colunas de junção especificadas.
+2. ( V ) O LEFT JOIN entre duas tabelas retorna todas as linhas da tabela à esquerda e as linhas correspondentes da tabela à direita. Se não houver correspondência, NULL é retornado para as colunas da tabela à direita.
+3. ( V ) O RIGHT JOIN é similar a um LEFT JOIN, mas ele inverte a ordem das tabelas, retornando todas as linhas da tabela à direita e as linhas correspondentes da tabela à esquerda.
+4. ( V ) O FULL JOIN entre duas tabelas retorna todas as linhas de ambas as tabelas, incluindo as que não têm correspondência. As colunas da tabela sem correspondência são preenchidas com NULL.
+5. ( V ) O CROSS JOIN (também conhecido como produto cartesiano) combina cada linha da primeira tabela com todas as linhas da segunda tabela, criando um conjunto de resultados que contém todas as combinações possíveis entre os registros das duas tabelas, sem levar em consideração qualquer critério de correspondência específico.
+
+**Alternativa correta: V, V, V, V, V**
+
+### Questão 6:
+**Enunciado:** Marque VERDADEIRO ou FALSO para as afirmações sobre índices em bancos de dados.
+
+**Afirmações:**
+
+1. ( ) É possível ter mais um índice clustered por tabela, desde que a chave do índice seja diferente.
+2. ( ) Não é possível criar índices nonclustered usando a mesma chave (mesmo coluna) que um índice clustered, mesmo que tenham nomes de índices diferentes.
+3. ( ) Um índice clustered pode ter mais de uma coluna como chave.
+4. ( ) A sintaxe - create index idx_data_competicao on resultado_natacao(data_competicao) - cria um índice chamado data_competicao na tabela resultado_natacao, usando a coluna idx_data_competicao como chave deste índice.
+5. ( ) No nível folha de um índice clustered, encontramos todas as colunas da tabela, independente da(s) coluna(s) escolhida(s) como chave.
+6. ( ) No nível folha de um índice nonclustered, encontramos todas as colunas da tabela, independente da(s) coluna(s) escolhida(s) como chave.
+
+**Respostas:**
+
+1. ( F ) É possível ter mais um índice clustered por tabela, desde que a chave do índice seja diferente.
+2. ( F ) Não é possível criar índices nonclustered usando a mesma chave (mesmo coluna) que um índice clustered, mesmo que tenham nomes de índices diferentes.
+3. ( V ) Um índice clustered pode ter mais de uma coluna como chave.
+4. ( F ) A sintaxe - create index idx_data_competicao on resultado_natacao(data_competicao) - cria um índice chamado idx_data_competicao na tabela resultado_natacao, usando a coluna data_competicao como chave deste índice.
+5. ( V ) No nível folha de um índice clustered, encontramos todas as colunas da tabela, independente da(s) coluna(s) escolhida(s) como chave.
+6. ( F ) No nível folha de um índice nonclustered, encontramos todas as colunas da tabela, independente da(s) coluna(s) escolhida(s) como chave.
+
+**Alternativa correta: F, F, V, F, V, F**
+
+### Questão 7:
+**Enunciado:** Crie um índice para a consulta fornecida.
+
+**Consulta:**
+
+```sql
+SELECT data_competicao, modalidade, nome_atleta, tempo
+FROM resultado_natacao
+WHERE data_competicao = '2023-09-17';
+```
+
+**Resposta:**
+
+Para otimizar esta consulta, o índice deve ser criado na coluna `data_competicao` e incluir as colunas `modalidade`, `nome_atleta` e `tempo` para cobrir a consulta completamente. Isso evitará a necessidade de fazer uma busca adicional (lookup) nos dados.
+
+O comando SQL para criar este índice seria:
+
+```sql
+CREATE INDEX idx_data_competicao_incl
+ON resultado_natacao (data_competicao)
+INCLUDE (modalidade, nome_atleta, tempo);
+```
+
+Este índice utiliza `data_competicao` como chave principal e inclui as outras colunas necessárias para a consulta, o que melhora a performance ao evitar a leitura desnecessária de páginas de dados adicionais.
+
+### Questão 8:
+**Enunciado:** Gerar lista com o código do agendamento, nome do paciente, nome do profissional, data de início e fim do agendamento somente do ano de 2020, ordenado pela data de início dos agendamentos.
+
+**Resposta:**
+
+Para resolver esta questão, vamos utilizar uma junção entre as tabelas `agenda`, `paciente` e `profissional` para obter as informações necessárias. A consulta deve filtrar os agendamentos do ano de 2020 e ordenar pela data de início (`dt_inicio`).
+
+```sql
+SELECT
+    a.cd_agenda,
+    p.nm_paciente,
+    pr.nm_profissional,
+    a.dt_inicio,
+    a.dt_fim
+FROM
+    agenda a
+JOIN
+    paciente p ON a.cd_paciente = p.cd_paciente
+JOIN
+    profissional pr ON a.cd_profissional = pr.cd_profissional
+WHERE
+    YEAR(a.dt_inicio) = 2020
+ORDER BY
+    a.dt_inicio;
+```
+
+### Questão 9:
+**Enunciado:** Informar o nome dos profissionais que não tiveram nenhum agendamento marcado para o ano de 2021 usando subquery correlacionada com EXISTS.
+
+**Resposta:**
+
+Para resolver esta questão, utilizamos uma subquery correlacionada com EXISTS para identificar os profissionais que não têm agendamentos no ano de 2021.
+
+```sql
+SELECT
+    pr.nm_profissional
+FROM
+    profissional pr
+WHERE
+    NOT EXISTS (
+        SELECT 1
+        FROM agenda a
+        WHERE a.cd_profissional = pr.cd_profissional
+        AND YEAR(a.dt_inicio) = 2021
+    );
+```
+
+### Questão 10:
+**Enunciado:** Informar o nome dos profissionais que não tiveram nenhum agendamento marcado.
+
+**Resposta:**
+
+Para resolver esta questão, utilizamos uma junção LEFT JOIN entre as tabelas `profissional` e `agenda` para identificar os profissionais que não têm agendamentos. Em seguida, filtramos para manter apenas aqueles que não possuem registros de agendamentos.
+
+```sql
+SELECT
+    pr.nm_profissional
+FROM
+    profissional pr
+LEFT JOIN
+    agenda a ON pr.cd_profissional = a.cd_profissional
+WHERE
+    a.cd_agenda IS NULL;
+```
+
+### Resumo das Respostas:
+
+### Questão 8:
+    ```sql
+    SELECT
+        a.cd_agenda,
+        p.nm_paciente,
+        pr.nm_profissional,
+        a.dt_inicio,
+        a.dt_fim
+    FROM
+        agenda a
+    JOIN
+        paciente p ON a.cd_paciente = p.cd_paciente
+    JOIN
+        profissional pr ON a.cd_profissional = pr.cd_profissional
+    WHERE
+        YEAR(a.dt_inicio) = 2020
+    ORDER BY
+        a.dt_inicio;
+    ```
+
+### Questão 9:
+    ```sql
+    SELECT
+        pr.nm_profissional
+    FROM
+        profissional pr
+    WHERE
+        NOT EXISTS (
+            SELECT 1
+            FROM agenda a
+            WHERE a.cd_profissional = pr.cd_profissional
+            AND YEAR(a.dt_inicio) = 2021
+        );
+    ```
+
+## Questão 10:
+    ```sql
+    SELECT
+        pr.nm_profissional
+    FROM
+        profissional pr
+    LEFT JOIN
+        agenda a ON pr.cd_profissional = a.cd_profissional
+    WHERE
+        a.cd_agenda IS NULL;
+    ```
+
