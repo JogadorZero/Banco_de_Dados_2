@@ -1,0 +1,72 @@
+### Questão 1:
+**Enunciado:** A organização de Natação pediu para gerar dados da última competição, trazendo uma lista com os 3 melhores tempos de cada modalidade.
+
+**Resposta:**
+
+Para essa consulta, vamos utilizar a cláusula `ROW_NUMBER` para numerar os tempos de cada atleta dentro de cada modalidade, e então selecionar os três primeiros tempos de cada modalidade. Supondo que a tabela se chama `resultado_natacao`, a consulta seria:
+
+```sql
+WITH RankedResults AS (
+    SELECT
+        modalidade,
+        nome_atleta,
+        tempo,
+        ROW_NUMBER() OVER (PARTITION BY modalidade ORDER BY tempo) AS ranking
+    FROM
+        resultado_natacao
+    WHERE
+        data_competicao = '2023-09-17'
+)
+SELECT
+    modalidade,
+    nome_atleta,
+    tempo,
+    ranking
+FROM
+    RankedResults
+WHERE
+    ranking <= 3;
+```
+
+### Questão 2:
+**Enunciado:** O que são transações no SQL Server e qual é a importância do controle de concorrência no processamento de transações?
+
+**Resposta:**
+
+Transações no SQL Server são unidades de trabalho que consistem em uma ou mais instruções SQL executadas como um bloco único. As transações garantem que o banco de dados passe de um estado consistente para outro, respeitando as propriedades ACID (Atomicidade, Consistência, Isolamento e Durabilidade).
+
+A importância do controle de concorrência no processamento de transações reside na necessidade de garantir que múltiplas transações possam ocorrer simultaneamente sem causar inconsistências nos dados. Isso é feito através de mecanismos como locks e níveis de isolamento, que ajudam a prevenir problemas como leituras sujas, leituras não repetíveis e phantom reads.
+
+### Questão 3:
+**Enunciado:** Marque VERDADEIRO ou FALSO para as afirmações sobre locks no SQL Server.
+
+**Afirmações:**
+
+1. ( ) O shared lock, em uma transação, permite que várias outras transações leiam os mesmos dados ao mesmo tempo, mas impede que outras transações atualizem ou excluam esses dados.
+2. ( ) O exclusive lock, em uma transação, impede que outras transações acessem ou alterem os dados dessa transação.
+3. ( ) Quando um objeto dentro de uma transação recebe um exclusive lock, é possível liberar o lock deste objeto sem que a transação tenha sido finalizada.
+4. ( ) Quando um objeto dentro de uma transação recebe um shared lock, é possível liberar o lock deste objeto sem que a transação tenha sido finalizada.
+5. ( ) Os shared lock e exclusive lock só são liberados quando uma transação (implícita ou explícita) é finalizada.
+
+**Respostas:**
+
+1. ( V ) O shared lock, em uma transação, permite que várias outras transações leiam os mesmos dados ao mesmo tempo, mas impede que outras transações atualizem ou excluam esses dados.
+2. ( V ) O exclusive lock, em uma transação, impede que outras transações acessem ou alterem os dados dessa transação.
+3. ( F ) Quando um objeto dentro de uma transação recebe um exclusive lock, é possível liberar o lock deste objeto sem que a transação tenha sido finalizada.
+4. ( F ) Quando um objeto dentro de uma transação recebe um shared lock, é possível liberar o lock deste objeto sem que a transação tenha sido finalizada.
+5. ( F ) Os shared lock e exclusive lock só são liberados quando uma transação (implícita ou explícita) é finalizada.
+
+**Alternativa correta: V, V, F, F, F**
+
+### Questão 4:
+**Enunciado:** Como o uso de índices pode ajudar a minimizar problemas de bloqueio e melhorar a performance no SQL Server? Explique suas razões.
+
+**Resposta:**
+
+O uso de índices pode melhorar a performance no SQL Server de várias maneiras:
+
+1. **Redução do Escaneamento de Tabelas**: Índices permitem que o SQL Server localize registros específicos sem ter que escanear toda a tabela, o que reduz o tempo de execução das consultas.
+2. **Melhoria no Desempenho de Consultas**: Consultas que usam índices são mais rápidas porque o índice fornece um caminho mais eficiente para encontrar os dados.
+3. **Menos Bloqueios**: Como os índices permitem acesso mais rápido aos dados, a duração dos locks nas transações pode ser reduzida, diminuindo a chance de bloqueios prolongados que afetam outras transações.
+4. **Isolamento de Transações**: Índices podem ajudar no isolamento de transações ao permitir que leituras ocorram sem interferir em operações de escrita, e vice-versa, dependendo do tipo de lock utilizado.
+5. **Execução de Junções**: Índices podem acelerar a execução de junções entre tabelas, reduzindo a carga de trabalho no banco de dados e melhorando o desempenho geral.
