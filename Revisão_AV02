@@ -254,3 +254,258 @@ WHERE
         a.cd_agenda IS NULL;
     ```
 
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+EZERCÍCIO DE TRIGER
+
+### 1. Criar um banco de dados e tabelas
+Primeiro, vamos criar o banco de dados e as tabelas `conta`, `lancamento` e `saldo`.
+
+```sql
+-- Criando o banco de dados
+CREATE DATABASE SimulacaoContaCorrente;
+GO
+
+USE SimulacaoContaCorrente;
+GO
+
+-- Criando a tabela conta
+CREATE TABLE conta (
+    codigo_conta INT PRIMARY KEY,
+    nome_correntista NVARCHAR(100) NOT NULL,
+    status BIT NOT NULL
+);
+GO
+
+-- Criando a tabela lancamento
+CREATE TABLE lancamento (
+    data_operacao DATETIME NOT NULL,
+    codigo_conta INT FOREIGN KEY REFERENCES conta(codigo_conta),
+    descricao_operacao NVARCHAR(100),
+    tipo_operacao CHAR(1) CHECK (tipo_operacao IN ('D', 'C')),
+    valor_operacao DECIMAL(18, 2) NOT NULL
+);
+GO
+
+-- Criando a tabela saldo
+CREATE TABLE saldo (
+    data_saldo DATETIME NOT NULL,
+    codigo_conta INT FOREIGN KEY REFERENCES conta(codigo_conta),
+    valor_saldo DECIMAL(18, 2) NOT NULL,
+    PRIMARY KEY (data_saldo, codigo_conta)
+);
+GO
+```
+
+### 2. Criar a procedure para adicionar um lançamento e a trigger para atualizar o saldo
+
+#### Procedure para adicionar lançamento
+```sql
+CREATE PROCEDURE AdicionarLancamento
+    @codigo_conta INT,
+    @descricao_operacao NVARCHAR(100),
+    @tipo_operacao CHAR(1),
+    @valor_operacao DECIMAL(18, 2)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @data_operacao DATETIME = GETDATE();
+
+    -- Verificar se a conta está ativa
+    IF NOT EXISTS (SELECT 1 FROM conta WHERE codigo_conta = @codigo_conta AND status = 1)
+    BEGIN
+        THROW 50001, 'Conta não está ativa ou não existe.', 1;
+    END
+
+    -- Inserir lançamento
+    INSERT INTO lancamento (data_operacao, codigo_conta, descricao_operacao, tipo_operacao, valor_operacao)
+    VALUES (@data_operacao, @codigo_conta, @descricao_operacao, @tipo_operacao, @valor_operacao);
+END;
+GO
+```
+
+#### Trigger para atualizar saldo
+```sql
+CREATE TRIGGER AtualizarSaldo
+ON lancamento
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @codigo_conta INT, @tipo_operacao CHAR(1), @valor_operacao DECIMAL(18, 2), @data_operacao DATETIME;
+
+    SELECT @codigo_conta = inserted.codigo_conta, 
+           @tipo_operacao = inserted.tipo_operacao, 
+           @valor_operacao = inserted.valor_operacao,
+           @data_operacao = inserted.data_operacao
+    FROM inserted;
+
+    IF EXISTS (SELECT 1 FROM saldo WHERE codigo_conta = @codigo_conta AND data_saldo = CAST(@data_operacao AS DATE))
+    BEGIN
+        IF @tipo_operacao = 'C'
+        BEGIN
+            UPDATE saldo 
+            SET valor_saldo = valor_saldo + @valor_operacao 
+            WHERE codigo_conta = @codigo_conta AND data_saldo = CAST(@data_operacao AS DATE);
+        END
+        ELSE
+        BEGIN
+            UPDATE saldo 
+            SET valor_saldo = valor_saldo - @valor_operacao 
+            WHERE codigo_conta = @codigo_conta AND data_saldo = CAST(@data_operacao AS DATE);
+        END
+    END
+    ELSE
+    BEGIN
+        DECLARE @valor_saldo DECIMAL(18, 2);
+
+        SET @valor_saldo = 
+            (SELECT TOP 1 valor_saldo 
+             FROM saldo 
+             WHERE codigo_conta = @codigo_conta 
+             ORDER BY data_saldo DESC);
+
+        IF @valor_saldo IS NULL 
+            SET @valor_saldo = 0;
+
+        IF @tipo_operacao = 'C'
+            SET @valor_saldo = @valor_saldo + @valor_operacao;
+        ELSE
+            SET @valor_saldo = @valor_saldo - @valor_operacao;
+
+        INSERT INTO saldo (data_saldo, codigo_conta, valor_saldo)
+        VALUES (CAST(@data_operacao AS DATE), @codigo_conta, @valor_saldo);
+    END
+END;
+GO
+```
+
+### 3. Procedure para transferência de valores
+```sql
+CREATE PROCEDURE TransferirValores
+    @codigo_conta_origem INT,
+    @codigo_conta_destino INT,
+    @valor_transferencia DECIMAL(18, 2)
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    BEGIN TRY
+        BEGIN TRANSACTION;
+
+        -- Verificar se ambas as contas estão ativas
+        IF NOT EXISTS (SELECT 1 FROM conta WHERE codigo_conta = @codigo_conta_origem AND status = 1)
+        BEGIN
+            THROW 50002, 'Conta de origem não está ativa ou não existe.', 1;
+        END
+
+        IF NOT EXISTS (SELECT 1 FROM conta WHERE codigo_conta = @codigo_conta_destino AND status = 1)
+        BEGIN
+            THROW 50003, 'Conta de destino não está ativa ou não existe.', 1;
+        END
+
+        -- Debitar da conta de origem
+        EXEC AdicionarLancamento @codigo_conta = @codigo_conta_origem, 
+                                 @descricao_operacao = 'Transferência para conta ' + CAST(@codigo_conta_destino AS NVARCHAR(10)), 
+                                 @tipo_operacao = 'D', 
+                                 @valor_operacao = @valor_transferencia;
+
+        -- Creditar na conta de destino
+        EXEC AdicionarLancamento @codigo_conta = @codigo_conta_destino, 
+                                 @descricao_operacao = 'Transferência da conta ' + CAST(@codigo_conta_origem AS NVARCHAR(10)), 
+                                 @tipo_operacao = 'C', 
+                                 @valor_operacao = @valor_transferencia;
+
+        COMMIT TRANSACTION;
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION;
+        THROW;
+    END CATCH
+END;
+GO
+```
+
+### 4. Criar tabela de log e triggers para auditoria
+```sql
+-- Criando a tabela de log
+CREATE TABLE log_auditoria (
+    data_hora_operacao DATETIME DEFAULT GETDATE(),
+    tipo_operacao CHAR(1) CHECK (tipo_operacao IN ('D', 'I', 'U')),
+    nome_usuario NVARCHAR(128) DEFAULT SUSER_NAME(),
+    descricao NVARCHAR(4000)
+);
+GO
+
+-- Trigger para auditoria na tabela conta
+CREATE TRIGGER AuditoriaConta
+ON conta
+AFTER INSERT, UPDATE, DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @descricao NVARCHAR(4000);
+
+    IF EXISTS (SELECT * FROM inserted)
+    BEGIN
+        SET @descricao = 'INSERT/UPDATE na tabela conta: ' + (SELECT * FROM inserted FOR XML PATH(''));
+        INSERT INTO log_auditoria (tipo_operacao, descricao) VALUES ('I', @descricao);
+    END
+    ELSE IF EXISTS (SELECT * FROM deleted)
+    BEGIN
+        SET @descricao = 'DELETE na tabela conta: ' + (SELECT * FROM deleted FOR XML PATH(''));
+        INSERT INTO log_auditoria (tipo_operacao, descricao) VALUES ('D', @descricao);
+    END
+END;
+GO
+
+-- Trigger para auditoria na tabela lancamento
+CREATE TRIGGER AuditoriaLancamento
+ON lancamento
+AFTER INSERT, UPDATE, DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @descricao NVARCHAR(4000);
+
+    IF EXISTS (SELECT * FROM inserted)
+    BEGIN
+        SET @descricao = 'INSERT/UPDATE na tabela lancamento: ' + (SELECT * FROM inserted FOR XML PATH(''));
+        INSERT INTO log_auditoria (tipo_operacao, descricao) VALUES ('I', @descricao);
+    END
+    ELSE IF EXISTS (SELECT * FROM deleted)
+    BEGIN
+        SET @descricao = 'DELETE na tabela lancamento: ' + (SELECT * FROM deleted FOR XML PATH(''));
+        INSERT INTO log_auditoria (tipo_operacao, descricao) VALUES ('D', @descricao);
+    END
+END;
+GO
+
+-- Trigger para auditoria na tabela saldo
+CREATE TRIGGER AuditoriaSaldo
+ON saldo
+AFTER INSERT, UPDATE, DELETE
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    DECLARE @descricao NVARCHAR(4000);
+
+    IF EXISTS (SELECT * FROM inserted)
+    BEGIN
+        SET @descricao = 'INSERT/UPDATE na tabela saldo: ' + (SELECT * FROM inserted FOR XML PATH(''));
+        INSERT INTO log_auditoria (tipo_operacao, descricao) VALUES ('I', @descricao);
+    END
+    ELSE IF EXISTS (SELECT * FROM deleted)
+    BEGIN
+        SET @descricao = 'DELETE na tabela saldo: ' + (SELECT * FROM deleted FOR XML PATH(''));
+        INSERT INTO log_auditoria (tipo_operacao, descricao) VALUES ('D', @descricao);
+    END
+END;
+GO
+```
+
+Esses scripts SQL criam o ambiente necessário para a simulação de uma conta corrente com operações de lançamento e transferência de valores, além de manter um log de auditoria para modificações nas tabelas.
